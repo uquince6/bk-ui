@@ -131,7 +131,10 @@ function createMatrixEngine(canvas, options = {}) {
       if (destroyed) handle?.destroy?.();
       else engine = handle;
     })
-    .catch((err) => console.warn('[bk-ui] matrix-engine no pudo cargar:', err));
+    .catch((err) => {
+      try { window.__bkMatrixEngineError = err; } catch {}
+      console.error('[bk-ui] matrix-engine no pudo cargar:', err);
+    });
 
   return {
     setIntensity(n) {
