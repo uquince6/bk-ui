@@ -47,6 +47,7 @@ function createRainLite(canvas, options = {}) {
   let frame = 0;
   let raf = 0;
   let boostUntil = 0;
+  let seeded = false;
 
   function resize() {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -55,7 +56,15 @@ function createRainLite(canvas, options = {}) {
     canvas.style.width = `${innerWidth}px`;
     canvas.style.height = `${innerHeight}px`;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    columns = Array.from({ length: Math.ceil(innerWidth / fontSize) }, () => Math.random() * -80);
+    // Primer render: se siembran las columnas repartidas por toda la altura para
+    // que se vea "ya lloviendo" al instante (evita el barrido de ~2 s desde
+    // vacío al volver a montar el fondo tras navegar). Resizes posteriores:
+    // comportamiento normal (entran desde arriba).
+    const rows = innerHeight / fontSize;
+    columns = Array.from({ length: Math.ceil(innerWidth / fontSize) }, () =>
+      seeded ? Math.random() * -80 : Math.random() * (rows + 20) - 20,
+    );
+    seeded = true;
   }
 
   function applyOpacity() {

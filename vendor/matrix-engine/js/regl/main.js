@@ -98,7 +98,9 @@ export default async (canvas, config, hooks = {}) => {
 			break;
 	}
 
-	const regl = createREGL({ canvas, pixelRatio: 1, extensions, optionalExtensions });
+	// [bk-ui patch] preserveDrawingBuffer: la app anfitriona toma un snapshot del
+	// canvas al navegar entre páginas para que el fondo no "desaparezca".
+	const regl = createREGL({ canvas, pixelRatio: 1, extensions, optionalExtensions, attributes: { preserveDrawingBuffer: true } });
 
 	// [bk-ui patch] teardown idempotente, disponible ya mismo para la app anfitriona
 	let tick = null;
