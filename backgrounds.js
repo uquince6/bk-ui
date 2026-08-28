@@ -164,8 +164,11 @@ function createMatrixEngine(canvas, options = {}) {
       if (aborted) handle?.destroy?.();
     })
     .catch((err) => {
+      // Al navegar entre páginas, los import()/fetch en vuelo se cancelan: eso
+      // no es un fallo real, así que no se ruidea la consola.
+      if (aborted || document.hidden) return;
       try { window.__bkMatrixEngineError = err; } catch {}
-      console.error('[bk-ui] matrix-engine no pudo cargar:', err);
+      console.warn('[bk-ui] matrix-engine:', err?.message || err);
     });
 
   return {
