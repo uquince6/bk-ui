@@ -202,15 +202,22 @@ export function mountBackground(target, config = {}) {
     ownsCanvas = true;
   }
 
+  // Identidad "de fábrica" del canvas — se captura ANTES de que ningún efecto lo
+  // toque. Los efectos escriben estilos inline (rain-lite fija width/height en px,
+  // el motor fija opacity); si al reemplazar el canvas copiáramos esos estilos,
+  // el nuevo quedaría con un tamaño fijo y no volvería a cubrir la ventana al
+  // redimensionar. Por eso se restaura este snapshot limpio.
+  const pristine = { id: canvas.id, className: canvas.className, cssText: canvas.style.cssText };
+
   // Un <canvas> solo admite un tipo de contexto de por vida: si rain-lite pidió
   // "2d", el motor WebGL ya no puede pedir "webgl" en ese mismo elemento. Al
   // cambiar de efecto se reemplaza el canvas por uno virgen en la misma posición.
   function replaceCanvas() {
     const fresh = document.createElement('canvas');
-    fresh.id = canvas.id;
-    fresh.className = canvas.className;
+    fresh.id = pristine.id;
+    fresh.className = pristine.className;
     fresh.setAttribute('aria-hidden', 'true');
-    fresh.style.cssText = canvas.style.cssText;
+    fresh.style.cssText = pristine.cssText;
     canvas.replaceWith(fresh);
     canvas = fresh;
   }

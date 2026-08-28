@@ -56,15 +56,29 @@ export default async (canvas, config, hooks = {}) => {
 	await Promise.all([loadJS("lib/regl.min.js"), loadJS("lib/gl-matrix.js")]);
 	if (isAborted()) return { destroy() {} };
 
-	const resize = () => {
-		const devicePixelRatio = window.devicePixelRatio ?? 1;
-		canvas.width = Math.ceil(canvas.clientWidth * devicePixelRatio * config.resolution);
-		canvas.height = Math.ceil(canvas.clientHeight * devicePixelRatio * config.resolution);
+	const applyCanvasSize = () => {
+		const dpr = window.devicePixelRatio ?? 1;
+		const w = canvas.clientWidth || window.innerWidth;
+		const h = canvas.clientHeight || window.innerHeight;
+		canvas.width = Math.max(1, Math.ceil(w * dpr * config.resolution));
+		canvas.height = Math.max(1, Math.ceil(h * dpr * config.resolution));
 	};
-	// [bk-ui patch] era window.onresize = resize (pisaba handlers de la app
-	// anfitriona); el doble-clic a pantalla completa se quita para uso embebido.
-	window.addEventListener("resize", resize, { passive: true });
-	resize();
+	// [bk-ui patch] cobertura total y resize en vivo. Antes: `window.onresize = resize`
+	// (pisaba handlers de la app anfitriona) y solo escuchaba window.resize, así que
+	// tras un re-montaje o un resize el buffer quedaba con el tamaño viejo y el efecto
+	// ocupaba solo parte de la pantalla. Ahora:
+	//  - ResizeObserver sobre el canvas: capta cualquier cambio real de su tamaño
+	//  - fallback a window.resize y a innerWidth/innerHeight si clientWidth es 0
+	//  - reajuste en el frame siguiente por si el layout aún no estaba resuelto
+	//  - el doble-clic a pantalla completa se quita (no deseado embebido)
+	let resizeObserver = null;
+	if (typeof ResizeObserver === "function") {
+		resizeObserver = new ResizeObserver(applyCanvasSize);
+		resizeObserver.observe(canvas);
+	}
+	window.addEventListener("resize", applyCanvasSize, { passive: true });
+	applyCanvasSize();
+	requestAnimationFrame(applyCanvasSize);
 
 	if (config.useCamera) {
 		await setupCamera();
@@ -93,7 +107,8 @@ export default async (canvas, config, hooks = {}) => {
 		if (torn) return;
 		torn = true;
 		try { tick?.cancel?.(); } catch {}
-		window.removeEventListener("resize", resize);
+		window.removeEventListener("resize", applyCanvasSize);
+		try { resizeObserver?.disconnect(); } catch {}
 		try { regl.destroy(); } catch {}
 		try {
 			canvas.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
