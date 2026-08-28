@@ -3,6 +3,12 @@
 // Define la FORMA y los defaults, no el almacenamiento: cada app persiste el
 // objeto donde ya guarda su config (Navigator -> navigator-data.json,
 // Vera -> Cloudflare KV). Usar normalizeAppearance() al leer datos crudos.
+//
+// applyAppearance() es el punto de entrada único que ambas apps usan para
+// aplicar una apariencia: monta el fondo y expone .set() para re-aplicar cuando
+// la config cambia. Así no se duplica la lógica de "leer config -> montar".
+
+import { mountBackground } from './backgrounds.js';
 
 export const KNOWN_EFFECTS = ['rain-lite', 'matrix-engine', 'none'];
 
@@ -36,4 +42,58 @@ export function fromLegacyMatrixLevel(matrixLevel, base) {
   return appearance;
 }
 
-export default { KNOWN_EFFECTS, DEFAULT_APPEARANCE, normalizeAppearance, fromLegacyMatrixLevel };
+function applyTheme(theme) {
+  try {
+    document.documentElement.dataset.bkTheme = theme || 'default';
+  } catch {}
+}
+
+// applyAppearance(target, raw, { effectOptions }) -> handle
+//   target        : <canvas> o contenedor (ver mountBackground)
+//   raw           : objeto de apariencia crudo (se normaliza)
+//   effectOptions : opciones que se pasan a TODOS los efectos; cada uno usa lo
+//                   suyo. Claves relevantes:
+//                     basePath  -> ruta de vendor/matrix-engine/ (obligatoria si
+//                                  se va a usar el efecto matrix-engine)
+//                     chars     -> glifos de rain-lite
+//   handle.set(nextRaw)  re-aplica una apariencia nueva sin re-montar de cero
+//   handle.pulse(ms)     realce transitorio (solo rain-lite)
+//   handle.destroy()
+export function applyAppearance(target, raw, { effectOptions = {} } = {}) {
+  let current = normalizeAppearance(raw);
+  applyTheme(current.theme);
+
+  const bg = mountBackground(target, {
+    effect: current.background.effect,
+    intensity: current.background.intensity,
+    options: { ...effectOptions, ...current.background.options },
+  });
+
+  return {
+    handle: bg,
+    get appearance() {
+      return current;
+    },
+    set(nextRaw) {
+      const next = normalizeAppearance(nextRaw);
+      applyTheme(next.theme);
+      bg.setEffect(next.background.effect, { ...effectOptions, ...next.background.options });
+      bg.setIntensity(next.background.intensity);
+      current = next;
+    },
+    pulse(ms) {
+      bg.pulse?.(ms);
+    },
+    destroy() {
+      bg.destroy();
+    },
+  };
+}
+
+export default {
+  KNOWN_EFFECTS,
+  DEFAULT_APPEARANCE,
+  normalizeAppearance,
+  fromLegacyMatrixLevel,
+  applyAppearance,
+};

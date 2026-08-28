@@ -120,22 +120,33 @@ function createRainLite(canvas, options = {}) {
    el motor todavía está bajando assets, `destroy()` libera el contexto WebGL
    igual (a través de `hooks.onTeardown`), sin fugas ni promesas colgadas.
 ---------------------------------------------------------------------------- */
+// `basePath` = URL desde donde se sirve `vendor/matrix-engine/` (con barra final).
+// Se pasa explícito — no se deriva de import.meta.url — para que este módulo se
+// pueda empaquetar con esbuild/rollup (Vera) sin depender del formato de salida.
+//   Navigator: "/vendor/bk-ui/vendor/matrix-engine/"
+//   Vera:      "/vendor/matrix-engine/"
 let _engineModules = null;
-function loadEngineModules() {
-  if (!_engineModules) {
-    const base = new URL('./vendor/matrix-engine/', import.meta.url).href;
-    _engineModules = Promise.all([
-      import(`${base}js/config.js`),
-      import(`${base}js/regl/main.js`),
-    ]).catch((err) => {
-      _engineModules = null; // reintentar en el próximo montaje
-      throw err;
-    });
-  }
+let _engineBase = null;
+function loadEngineModules(base) {
+  if (_engineModules && _engineBase === base) return _engineModules;
+  _engineBase = base;
+  _engineModules = Promise.all([
+    import(/* @vite-ignore */ `${base}js/config.js`),
+    import(/* @vite-ignore */ `${base}js/regl/main.js`),
+  ]).catch((err) => {
+    _engineModules = null; // reintentar en el próximo montaje
+    throw err;
+  });
   return _engineModules;
 }
 
 function createMatrixEngine(canvas, options = {}) {
+  const rawBase = options.basePath || options.matrixEngineBasePath;
+  if (!rawBase) {
+    console.error('[bk-ui] matrix-engine requiere options.basePath (ruta de vendor/matrix-engine/)');
+    return { setIntensity() {}, pulse() {}, destroy() {} };
+  }
+  const base = String(rawBase).endsWith('/') ? String(rawBase) : String(rawBase) + '/';
   const opacityFor = (i) => (i <= 0 ? '0' : String(Math.min(0.05 + i * 0.055, 0.5)));
   let intensity = clampIntensity(options.intensity ?? 3);
   let aborted = false;
@@ -143,7 +154,7 @@ function createMatrixEngine(canvas, options = {}) {
 
   canvas.style.opacity = opacityFor(intensity);
 
-  loadEngineModules()
+  loadEngineModules(base)
     .then(([configMod, mainMod]) => {
       if (aborted) return undefined;
       // makeConfig() espera strings (viene de URLSearchParams: parseFloat / toLowerCase).

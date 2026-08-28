@@ -71,4 +71,21 @@ import { tokens } from '@bk/ui/tokens.js';
   - v0.3.3 — ciclo de montaje/desmontaje robusto: alternar rain-lite / matrix-engine
     / none repetidas veces sin recargar, sin fugas de contexto WebGL, con cache de
     shaders y texturas entre montajes.
+- v0.4 — `applyAppearance()` como punto de entrada único (leer config → montar → `.set()`);
+  `matrix-engine` recibe `basePath` explícito (empaquetable con bundler, p. ej. Vera). ✅
 - v0.x — escala de espaciado, más primitivas, quizá componentes.
+
+### `applyAppearance`
+
+```js
+import { applyAppearance } from '@bk/ui/appearance';
+const bg = applyAppearance(canvas, config.appearance, {
+  effectOptions: { basePath: '/vendor/matrix-engine/', chars: '01…' }
+});
+bg.set(nuevaConfig);   // re-aplica sin re-montar
+bg.destroy();
+```
+
+`basePath` (obligatorio si se usa `matrix-engine`) = URL desde donde se sirve
+`vendor/matrix-engine/`. En Navigator `"/vendor/bk-ui/vendor/matrix-engine/"`;
+en apps con bundler, copiar esa carpeta al hosting y pasar su ruta.
