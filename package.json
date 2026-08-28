@@ -1,6 +1,6 @@
 {
   "name": "@bk/ui",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "Sistema visual compartido: design tokens, base CSS y fondos reutilizables.",
   "type": "module",
@@ -12,7 +12,7 @@
     "./backgrounds": "./backgrounds.js",
     "./appearance": "./appearance.js"
   },
-  "files": ["dist", "tokens.json", "build.mjs", "backgrounds.js", "appearance.js"],
+  "files": ["dist", "tokens.json", "build.mjs", "backgrounds.js", "appearance.js", "vendor"],
   "scripts": {
     "build": "node build.mjs",
     "prepare": "node build.mjs"

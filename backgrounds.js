@@ -102,10 +102,58 @@ function createRainLite(canvas, options = {}) {
   };
 }
 
+/* ----------------------------------------------------------------------------
+   matrix-engine — el motor WebGL de Rezmason/matrix (vendorizado y recortado
+   en vendor/matrix-engine/). Se carga en diferido; la intensidad se traduce a
+   opacidad del canvas para mantenerlo discreto como fondo.
+---------------------------------------------------------------------------- */
+function createMatrixEngine(canvas, options = {}) {
+  const base = new URL('./vendor/matrix-engine/', import.meta.url).href;
+  const opacityFor = (i) => (i <= 0 ? '0' : String(Math.min(0.05 + i * 0.055, 0.5)));
+  let intensity = clampIntensity(options.intensity ?? 3);
+  let engine = null;
+  let destroyed = false;
+
+  canvas.style.opacity = opacityFor(intensity);
+
+  Promise.all([import(`${base}js/config.js`), import(`${base}js/regl/main.js`)])
+    .then(([configMod, mainMod]) => {
+      if (destroyed) return null;
+      const params = {
+        version: 'classic',
+        resolution: 0.5,
+        numColumns: 60,
+        skipIntro: true,
+        ...(options.params || {}),
+      };
+      return mainMod.default(canvas, configMod.default(params));
+    })
+    .then((handle) => {
+      if (destroyed) handle?.destroy?.();
+      else engine = handle;
+    })
+    .catch((err) => console.warn('[bk-ui] matrix-engine no pudo cargar:', err));
+
+  return {
+    setIntensity(n) {
+      intensity = clampIntensity(n);
+      canvas.style.opacity = opacityFor(intensity);
+    },
+    pulse() {}, // el motor no expone realce; no-op
+    destroy() {
+      destroyed = true;
+      engine?.destroy?.();
+      engine = null;
+      canvas.style.opacity = '0';
+    },
+  };
+}
+
 const noop = () => ({ setIntensity() {}, pulse() {}, destroy() {} });
 
 const EFFECTS = {
   'rain-lite': createRainLite,
+  'matrix-engine': createMatrixEngine,
   none: noop,
 };
 

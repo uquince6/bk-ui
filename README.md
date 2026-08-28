@@ -26,8 +26,15 @@ bg.pulse(2200);          // realce transitorio
 bg.setEffect('none');
 ```
 
-Efectos disponibles: `rain-lite` (lluvia de glifos en canvas 2D, portada de Navigator), `none`.
-`matrix-engine` (motor de Rezmason) llega en v0.3.
+Efectos disponibles:
+- `rain-lite` — lluvia de glifos en canvas 2D, portada de Navigator. Barata. Soporta `pulse()`.
+- `matrix-engine` — el motor WebGL de [Rezmason/matrix](https://github.com/Rezmason/matrix),
+  vendorizado y recortado en `vendor/matrix-engine/` (ver su `UPSTREAM.md` / `PATCHES.md`).
+  Más pesado; la intensidad se traduce a opacidad. `pulse()` es no-op.
+- `none`.
+
+En apps con bundler (Vera) el efecto `matrix-engine` hace `import()` dinámico de
+`vendor/matrix-engine/`; hay que copiar esa carpeta a los assets servidos.
 
 Fuente única: **`tokens.json`**. `npm run build` regenera `dist/`. No editar `dist/` a mano.
 
@@ -60,5 +67,5 @@ import { tokens } from '@bk/ui/tokens.js';
 
 - v0.1 — design tokens. ✅
 - v0.2 — sistema de fondos: `mountBackground` + efecto `rain-lite` + esquema `appearance`. ✅
-- v0.3 — motor Matrix (Rezmason) vendorizado y recortado como efecto `matrix-engine`.
+- v0.3 — motor Matrix (Rezmason) vendorizado y recortado como efecto `matrix-engine`. ✅
 - v0.x — escala de espaciado, más primitivas, quizá componentes.
