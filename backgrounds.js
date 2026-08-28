@@ -106,30 +106,53 @@ function createRainLite(canvas, options = {}) {
    matrix-engine — el motor WebGL de Rezmason/matrix (vendorizado y recortado
    en vendor/matrix-engine/). Se carga en diferido; la intensidad se traduce a
    opacidad del canvas para mantenerlo discreto como fondo.
+
+   El montaje es cancelable en cualquier punto: si se cambia de efecto mientras
+   el motor todavía está bajando assets, `destroy()` libera el contexto WebGL
+   igual (a través de `hooks.onTeardown`), sin fugas ni promesas colgadas.
 ---------------------------------------------------------------------------- */
+let _engineModules = null;
+function loadEngineModules() {
+  if (!_engineModules) {
+    const base = new URL('./vendor/matrix-engine/', import.meta.url).href;
+    _engineModules = Promise.all([
+      import(`${base}js/config.js`),
+      import(`${base}js/regl/main.js`),
+    ]).catch((err) => {
+      _engineModules = null; // reintentar en el próximo montaje
+      throw err;
+    });
+  }
+  return _engineModules;
+}
+
 function createMatrixEngine(canvas, options = {}) {
-  const base = new URL('./vendor/matrix-engine/', import.meta.url).href;
   const opacityFor = (i) => (i <= 0 ? '0' : String(Math.min(0.05 + i * 0.055, 0.5)));
   let intensity = clampIntensity(options.intensity ?? 3);
-  let engine = null;
-  let destroyed = false;
+  let aborted = false;
+  let teardown = null; // lo entrega el motor apenas existe el contexto WebGL
 
   canvas.style.opacity = opacityFor(intensity);
 
-  Promise.all([import(`${base}js/config.js`), import(`${base}js/regl/main.js`)])
+  loadEngineModules()
     .then(([configMod, mainMod]) => {
-      if (destroyed) return null;
-      // makeConfig() espera valores string (viene de URLSearchParams): sus parsers
-      // hacen parseFloat / s.toLowerCase(). Pasar un número o boolean los rompe.
+      if (aborted) return undefined;
+      // makeConfig() espera strings (viene de URLSearchParams: parseFloat / toLowerCase).
       const params = {};
       for (const [k, v] of Object.entries({ resolution: '0.6', ...(options.params || {}) })) {
         params[k] = String(v);
       }
-      return mainMod.default(canvas, configMod.default(params));
+      const hooks = {
+        aborted: () => aborted,
+        onTeardown: (fn) => {
+          teardown = fn;
+          if (aborted) fn();
+        },
+      };
+      return mainMod.default(canvas, configMod.default(params), hooks);
     })
     .then((handle) => {
-      if (destroyed) handle?.destroy?.();
-      else engine = handle;
+      if (aborted) handle?.destroy?.();
     })
     .catch((err) => {
       try { window.__bkMatrixEngineError = err; } catch {}
@@ -143,9 +166,9 @@ function createMatrixEngine(canvas, options = {}) {
     },
     pulse() {}, // el motor no expone realce; no-op
     destroy() {
-      destroyed = true;
-      engine?.destroy?.();
-      engine = null;
+      aborted = true;
+      try { teardown?.(); } catch {}
+      teardown = null;
       canvas.style.opacity = '0';
     },
   };

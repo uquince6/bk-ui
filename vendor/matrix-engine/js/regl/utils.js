@@ -4,6 +4,27 @@
 const ENGINE_BASE = new URL("../../", import.meta.url).href;
 const engineURL = (url) => (url == null ? url : new URL(url, ENGINE_BASE).href);
 
+// [bk-ui patch] cache a nivel de módulo: al alternar efectos se re-montaba el
+// motor y se volvían a bajar y decodificar los mismos shaders y PNGs MSDF cada
+// vez. Se cachea la descarga (no la textura, que sí es por instancia de regl).
+const _textCache = new Map();
+const _imageCache = new Map();
+const fetchTextCached = (fullURL) => {
+	if (!_textCache.has(fullURL)) {
+		_textCache.set(fullURL, fetch(fullURL).then((r) => r.text()).catch((e) => { _textCache.delete(fullURL); throw e; }));
+	}
+	return _textCache.get(fullURL);
+};
+const loadImageCached = (fullURL) => {
+	if (!_imageCache.has(fullURL)) {
+		const img = new Image();
+		img.crossOrigin = "anonymous";
+		img.src = fullURL;
+		_imageCache.set(fullURL, img.decode().then(() => img).catch((e) => { _imageCache.delete(fullURL); throw e; }));
+	}
+	return _imageCache.get(fullURL);
+};
+
 const makePassTexture = (regl, halfFloat) =>
 	regl.texture({
 		width: 1,
@@ -57,10 +78,7 @@ const loadImage = (regl, url, mipmap) => {
 		},
 		loaded: (async () => {
 			if (url != null) {
-				const data = new Image();
-				data.crossOrigin = "anonymous";
-				data.src = engineURL(url); // [bk-ui patch]
-				await data.decode();
+				const data = await loadImageCached(engineURL(url)); // [bk-ui patch] cache
 				loaded = true;
 				if (mipmap) {
 					if (!isPowerOfTwo(data.width) || !isPowerOfTwo(data.height)) {
@@ -91,7 +109,7 @@ const loadText = (url) => {
 		},
 		loaded: (async () => {
 			if (url != null) {
-				text = await (await fetch(engineURL(url))).text(); // [bk-ui patch]
+				text = await fetchTextCached(engineURL(url)); // [bk-ui patch] cache
 				loaded = true;
 			}
 		})(),

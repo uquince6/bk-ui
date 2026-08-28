@@ -23,7 +23,9 @@ const effects = {
 	mirror: makeMirrorPass,
 };
 
-const dimensions = { width: 1, height: 1 };
+// [bk-ui patch] `dimensions` era un singleton de módulo: al re-montar quedaba
+// con el tamaño del montaje anterior, el frame loop no detectaba cambio y nunca
+// llamaba setSize() sobre el pipeline nuevo -> lienzo en blanco. Ahora es local.
 
 // [bk-ui patch] base real del motor vendorizado (ver PATCHES.md)
 const ENGINE_BASE = new URL("../../", import.meta.url).href;
@@ -43,8 +45,16 @@ const loadJS = (src) =>
 		document.body.appendChild(tag);
 	});
 
-export default async (canvas, config) => {
+// [bk-ui patch] `hooks` nuevo: la app anfitriona puede abortar un montaje en
+// curso y obtener el teardown apenas existe el contexto WebGL, aunque la carga
+// de assets todavía no haya terminado (evita fugas de contexto al alternar
+// efectos rápido). Ver PATCHES.md.
+export default async (canvas, config, hooks = {}) => {
+	const dimensions = { width: 0, height: 0 };
+	const isAborted = () => Boolean(hooks.aborted?.());
+
 	await Promise.all([loadJS("lib/regl.min.js"), loadJS("lib/gl-matrix.js")]);
+	if (isAborted()) return { destroy() {} };
 
 	const resize = () => {
 		const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -76,6 +86,23 @@ export default async (canvas, config) => {
 
 	const regl = createREGL({ canvas, pixelRatio: 1, extensions, optionalExtensions });
 
+	// [bk-ui patch] teardown idempotente, disponible ya mismo para la app anfitriona
+	let tick = null;
+	let torn = false;
+	const teardown = () => {
+		if (torn) return;
+		torn = true;
+		try { tick?.cancel?.(); } catch {}
+		window.removeEventListener("resize", resize);
+		try { regl.destroy(); } catch {}
+		try {
+			canvas.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
+			canvas.getContext("webgl")?.getExtension("WEBGL_lose_context")?.loseContext();
+		} catch {}
+	};
+	hooks.onTeardown?.(teardown);
+	if (isAborted()) { teardown(); return { destroy: teardown }; }
+
 	const cameraTex = regl.texture(cameraCanvas);
 	const lkg = await getLKG(config.useHoloplay, true);
 
@@ -86,12 +113,19 @@ export default async (canvas, config) => {
 	const pipeline = makePipeline(context, [makeRain, makeBloomPass, effects[effectName], makeQuiltPass]);
 	const screenUniforms = { tex: pipeline[pipeline.length - 1].outputs.primary };
 	const drawToScreen = regl({ uniforms: screenUniforms });
-	await Promise.all(pipeline.map((step) => step.ready));
+	try {
+		await Promise.all(pipeline.map((step) => step.ready));
+	} catch (err) {
+		// [bk-ui patch] si un asset falla, no dejar el contexto colgado
+		teardown();
+		throw err;
+	}
+	if (isAborted()) { teardown(); return { destroy: teardown }; }
 
 	const targetFrameTimeMilliseconds = 1000 / config.fps;
 	let last = NaN;
 
-	const tick = regl.frame(({ viewportWidth, viewportHeight }) => { // [bk-ui patch] se retorna un handle abajo
+	tick = regl.frame(({ viewportWidth, viewportHeight }) => { // [bk-ui patch] tick declarado arriba
 		if (config.once) {
 			tick.cancel();
 		}
@@ -129,11 +163,5 @@ export default async (canvas, config) => {
 	});
 
 	// [bk-ui patch] handle para poder desmontar el efecto de forma limpia
-	return {
-		destroy() {
-			try { tick.cancel(); } catch {}
-			window.removeEventListener("resize", resize);
-			try { regl.destroy(); } catch {}
-		},
-	};
+	return { destroy: teardown };
 };

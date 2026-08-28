@@ -68,4 +68,7 @@ import { tokens } from '@bk/ui/tokens.js';
 - v0.1 — design tokens. ✅
 - v0.2 — sistema de fondos: `mountBackground` + efecto `rain-lite` + esquema `appearance`. ✅
 - v0.3 — motor Matrix (Rezmason) vendorizado y recortado como efecto `matrix-engine`. ✅
+  - v0.3.3 — ciclo de montaje/desmontaje robusto: alternar rain-lite / matrix-engine
+    / none repetidas veces sin recargar, sin fugas de contexto WebGL, con cache de
+    shaders y texturas entre montajes.
 - v0.x — escala de espaciado, más primitivas, quizá componentes.
