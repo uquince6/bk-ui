@@ -119,13 +119,12 @@ function createMatrixEngine(canvas, options = {}) {
   Promise.all([import(`${base}js/config.js`), import(`${base}js/regl/main.js`)])
     .then(([configMod, mainMod]) => {
       if (destroyed) return null;
-      const params = {
-        version: 'classic',
-        resolution: 0.5,
-        numColumns: 60,
-        skipIntro: true,
-        ...(options.params || {}),
-      };
+      // makeConfig() espera valores string (viene de URLSearchParams): sus parsers
+      // hacen parseFloat / s.toLowerCase(). Pasar un número o boolean los rompe.
+      const params = {};
+      for (const [k, v] of Object.entries({ resolution: '0.6', ...(options.params || {}) })) {
+        params[k] = String(v);
+      }
       return mainMod.default(canvas, configMod.default(params));
     })
     .then((handle) => {
@@ -177,6 +176,19 @@ export function mountBackground(target, config = {}) {
     ownsCanvas = true;
   }
 
+  // Un <canvas> solo admite un tipo de contexto de por vida: si rain-lite pidió
+  // "2d", el motor WebGL ya no puede pedir "webgl" en ese mismo elemento. Al
+  // cambiar de efecto se reemplaza el canvas por uno virgen en la misma posición.
+  function replaceCanvas() {
+    const fresh = document.createElement('canvas');
+    fresh.id = canvas.id;
+    fresh.className = canvas.className;
+    fresh.setAttribute('aria-hidden', 'true');
+    fresh.style.cssText = canvas.style.cssText;
+    canvas.replaceWith(fresh);
+    canvas = fresh;
+  }
+
   let intensity = clampIntensity(config.intensity ?? 3);
   let current = EFFECTS[config.effect] ? config.effect : 'rain-lite';
   let impl = EFFECTS[current](canvas, { ...config.options, intensity });
@@ -195,6 +207,7 @@ export function mountBackground(target, config = {}) {
     setEffect(name, options = {}) {
       if (!EFFECTS[name] || name === current) return;
       impl.destroy();
+      replaceCanvas();
       current = name;
       impl = EFFECTS[name](canvas, { ...options, intensity });
     },
