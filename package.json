@@ -1,6 +1,6 @@
 {
   "name": "@bk/ui",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "private": false,
   "description": "Sistema visual compartido: design tokens, base CSS y fondos reutilizables.",
   "type": "module",
@@ -10,22 +10,13 @@
     "./tokens.js": "./dist/tokens.js",
     "./tokens.json": "./tokens.json",
     "./backgrounds": "./backgrounds.js",
+    "./bg-continuity": "./bg-continuity.js",
     "./appearance": "./appearance.js"
   },
-  "files": [
-    "dist",
-    "tokens.json",
-    "build.mjs",
-    "backgrounds.js",
-    "appearance.js",
-    "vendor"
-  ],
+  "files": ["dist", "tokens.json", "build.mjs", "backgrounds.js", "bg-continuity.js", "appearance.js", "vendor"],
   "scripts": {
     "build": "node build.mjs",
     "prepare": "node build.mjs"
   },
-  "license": "MIT",
-  "dependencies": {
-    "@bk/ui": "github:uquince6/bk-ui#v0.3.2"
-  }
+  "license": "MIT"
 }
