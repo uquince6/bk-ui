@@ -1,0 +1,19 @@
+{
+  "name": "@bk/ui",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Sistema visual compartido: design tokens, base CSS y (más adelante) fondos reutilizables.",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./dist/tokens.css",
+    "./base.css": "./dist/base.css",
+    "./tokens.js": "./dist/tokens.js",
+    "./tokens.json": "./tokens.json"
+  },
+  "files": ["dist", "tokens.json", "build.mjs"],
+  "scripts": {
+    "build": "node build.mjs",
+    "prepare": "node build.mjs"
+  },
+  "license": "MIT"
+}

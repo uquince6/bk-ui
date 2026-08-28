@@ -1,0 +1,30 @@
+/* Generado desde tokens.json por build.mjs — no editar a mano. */
+:root {
+  --bk-bg: #0F131B;
+  --bk-surface: #161B25;
+  --bk-surface-2: #1D2431;
+  --bk-surface-3: #252E3D;
+  --bk-line: #2A3342;
+  --bk-line-soft: #202936;
+  --bk-border: rgba(255, 255, 255, 0.10);
+  --bk-ink: #EAEDF3;
+  --bk-ink-dim: #95A0B4;
+  --bk-ink-faint: #5E6980;
+  --bk-accent: #3FC7B4;
+  --bk-accent-dim: #26564F;
+  --bk-accent-2: #9B87F5;
+  --bk-warning: #F3A93C;
+  --bk-warning-dim: #4A3A1C;
+  --bk-danger: #E0687A;
+  --bk-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bk-font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --bk-font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --bk-radius-sm: 8px;
+  --bk-radius-md: 12px;
+  --bk-radius-lg: 16px;
+  --bk-radius-xl: 24px;
+  --bk-radius-pill: 999px;
+  --bk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.20);
+  --bk-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --bk-shadow-lg: 0 30px 70px -18px rgba(0, 0, 0, 0.55);
+}
