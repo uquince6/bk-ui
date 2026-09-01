@@ -15,6 +15,27 @@ como por apps desplegadas en la nube, sin copiar archivos a mano.
 | `@bk/ui/tokens.json` | fuente de verdad de los tokens | herramientas |
 | `@bk/ui/backgrounds` | `mountBackground(target, cfg)` → `{ setIntensity, setEffect, pulse, destroy }` | fondos animados |
 | `@bk/ui/appearance` | esquema `{ theme, background: { effect, intensity, options } }` + `normalizeAppearance()` | config consistente entre apps |
+| `@bk/ui/notifications` | `createNotifier(options)` → `{ show, hide, destroy }` | avisos Matrix accesibles |
+
+### Notificaciones
+
+```js
+import { createNotifier } from '@bk/ui/notifications';
+
+const notifications = createNotifier({ duration: 2600 });
+notifications.show({
+  title: 'PROJECT SAVED',
+  detail: 'CONFIGURACIÓN ACTUALIZADA',
+});
+notifications.show({
+  title: 'SAVE ERROR',
+  detail: error.message,
+  variant: 'error',
+});
+```
+
+El módulo crea el marcado accesible y conserva una sola notificación visible. Las
+primitivas visuales Matrix se comparten internamente con `bg-continuity`.
 
 ### Fondos
 

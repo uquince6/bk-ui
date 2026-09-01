@@ -14,6 +14,8 @@
 // cabecera), va a z-index:-1, y todo el overlay se elimina siempre — aunque
 // release() no llegue a llamarse — como muy tarde a los 4 s.
 
+import { ensureFeedbackStyles } from './feedback-styles.js';
+
 const KEY = 'bk:bg-snapshot:v3';
 const CANVAS_ID = 'matrix';
 const STYLE_ID = 'bk-bg-continuity-style';
@@ -22,16 +24,6 @@ const SNAP_ALPHA_CAP = 0.5;
 
 const CSS = `
 @keyframes bk-bg-wipe { to { clip-path: inset(100% 0 0 0); opacity: 0; } }
-@keyframes bk-bg-fade { to { opacity: 0; } }
-@keyframes bk-bg-scan {
-  0%   { transform: translate3d(0,-4vh,0);  opacity: 0; }
-  12%  { opacity: .9; }
-  100% { transform: translate3d(0,104vh,0); opacity: 0; }
-}
-@keyframes bk-bg-flicker {
-  0%,100% { opacity: 1; } 46% { opacity: .84; } 47% { opacity: .98; }
-  48% { opacity: .72; } 49% { opacity: 1; } 72% { opacity: .9; }
-}
 .bk-bg-snap {
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background: center / cover no-repeat; opacity: .8; clip-path: inset(0 0 0 0);
@@ -47,24 +39,25 @@ const CSS = `
   text-shadow: 0 0 12px var(--bk-accent, #3FC7B4), 0 0 3px rgba(220,255,245,.6);
   background: radial-gradient(130% 180% at 50% 50%, rgba(63,199,180,.26), rgba(63,199,180,.04) 68%, transparent);
   box-shadow: 0 0 34px rgba(63,199,180,.45), inset 0 0 20px rgba(63,199,180,.2);
-  animation: bk-bg-flicker 2s linear infinite;
+  animation: bk-feedback-flicker 2s linear infinite;
 }
 .bk-bg-loading > span { margin-right: -.4em; }
-.bk-bg-loading.bk-bg-out { animation: bk-bg-fade .4s ease forwards; }
+.bk-bg-loading.bk-bg-out { animation: bk-feedback-fade .4s ease forwards; }
 .bk-bg-scanline {
   position: fixed; left: 0; right: 0; top: 0; height: 2px; z-index: -1; pointer-events: none;
   background: linear-gradient(90deg, transparent, var(--bk-accent, #3FC7B4) 25%, #d6fff4 50%, var(--bk-accent, #3FC7B4) 75%, transparent);
   box-shadow: 0 0 14px 2px var(--bk-accent, #3FC7B4), 0 0 30px 4px rgba(63,199,180,.25);
-  animation: bk-bg-scan .55s linear forwards;
+  animation: bk-feedback-scan .55s linear forwards;
 }
 @media (prefers-reduced-motion: reduce) {
-  .bk-bg-snap.bk-bg-out { animation: bk-bg-fade .3s ease forwards; }
+  .bk-bg-snap.bk-bg-out { animation: bk-feedback-fade .3s ease forwards; }
   .bk-bg-loading { animation: none; }
   .bk-bg-scanline { display: none; }
 }
 `;
 
 function ensureStyle() {
+  ensureFeedbackStyles();
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
   style.id = STYLE_ID;
@@ -95,7 +88,7 @@ export function restoreBgSnapshot({ canvasId = CANVAS_ID, label = '' } = {}) {
 
       if (label) {
         const box = document.createElement('div');
-        box.className = 'bk-bg-loading';
+        box.className = 'bk-feedback bk-bg-loading';
         box.setAttribute('aria-hidden', 'true');
         const span = document.createElement('span');
         span.textContent = String(label);
@@ -133,9 +126,10 @@ export function restoreBgSnapshot({ canvasId = CANVAS_ID, label = '' } = {}) {
   };
 }
 
-export function keepBgSnapshot({ canvasId = CANVAS_ID, width = 900 } = {}) {
+export function keepBgSnapshot({ canvasId = CANVAS_ID, width = 900, shouldSave = () => true } = {}) {
   const save = () => {
     try {
+      if (!shouldSave()) return;
       const c = document.getElementById(canvasId);
       if (!c || !c.width || !c.height) return;
       // El buffer WebGL está a brillo pleno; la sutileza del fondo la da el

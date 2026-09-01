@@ -1,6 +1,6 @@
 {
   "name": "@bk/ui",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": false,
   "description": "Sistema visual compartido: design tokens, base CSS y fondos reutilizables.",
   "type": "module",
@@ -11,11 +11,23 @@
     "./tokens.json": "./tokens.json",
     "./backgrounds": "./backgrounds.js",
     "./bg-continuity": "./bg-continuity.js",
+    "./notifications": "./notifications.js",
     "./appearance": "./appearance.js"
   },
-  "files": ["dist", "tokens.json", "build.mjs", "backgrounds.js", "bg-continuity.js", "appearance.js", "vendor"],
+  "files": [
+    "dist",
+    "tokens.json",
+    "build.mjs",
+    "backgrounds.js",
+    "bg-continuity.js",
+    "feedback-styles.js",
+    "notifications.js",
+    "appearance.js",
+    "vendor"
+  ],
   "scripts": {
     "build": "node build.mjs",
+    "test": "node --test",
     "prepare": "node build.mjs"
   },
   "license": "MIT"
