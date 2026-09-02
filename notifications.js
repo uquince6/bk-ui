@@ -8,32 +8,46 @@ const CSS = `
 .bk-notification {
   position: fixed; left: 50%; bottom: var(--bk-notification-bottom, 14px);
   z-index: var(--bk-notification-z, 60);
-  min-width: min(520px, calc(100% - 28px)); padding: 14px 20px;
-  border: 1px solid rgba(73,220,177,.38); border-radius: 14px;
-  background: linear-gradient(180deg,rgba(9,20,20,.88),rgba(6,12,17,.82));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05),0 0 28px rgba(73,220,177,.18),0 14px 50px rgba(0,0,0,.45);
-  backdrop-filter: blur(16px); text-align: center; opacity: 0;
-  transform: translate(-50%,18px) scale(.97);
+  width: min(680px, calc(100% - 28px)); padding: 15px 28px 14px;
+  overflow: hidden; border: 1px solid rgba(73,220,177,.55); border-radius: 2px;
+  background: radial-gradient(130% 180% at 50% 50%,rgba(63,199,180,.24),rgba(5,17,18,.9) 68%,rgba(3,10,14,.94));
+  box-shadow: inset 0 0 22px rgba(73,220,177,.16),0 0 30px rgba(73,220,177,.22),0 14px 50px rgba(0,0,0,.5);
+  backdrop-filter: blur(12px); text-align: center; opacity: 0;
+  transform: translate(-50%,18px) scale(.985);
   transition: opacity .22s ease,transform .22s ease;
 }
 .bk-notification.bk-notification-visible { opacity: 1; transform: translate(-50%,0) scale(1); }
+.bk-notification::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg,transparent,rgba(73,220,177,.75) 25%,#d6fff4 50%,rgba(73,220,177,.75) 75%,transparent);
+  box-shadow: 0 0 12px 2px rgba(73,220,177,.72),0 0 24px 4px rgba(73,220,177,.2);
+  opacity: 0;
+}
+.bk-notification.bk-notification-visible::after { animation: bk-notification-scan .62s linear; }
+@keyframes bk-notification-scan {
+  0% { transform: translateY(-2px); opacity: 0; }
+  12% { opacity: .9; }
+  100% { transform: translateY(62px); opacity: 0; }
+}
 .bk-notification.bk-notification-error {
   border-color: rgba(255,139,158,.48);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05),0 0 28px rgba(255,139,158,.16),0 14px 50px rgba(0,0,0,.45);
 }
 .bk-notification-title {
-  color: #a5ffe8; font: 800 13px/1.2 var(--bk-font-mono, ui-monospace, monospace);
-  letter-spacing: .19em; text-shadow: 0 0 12px rgba(73,220,177,.78);
+  color: #d9fff5; font: 800 15px/1.2 var(--bk-font-mono, ui-monospace, monospace);
+  letter-spacing: .34em; text-transform: uppercase;
+  text-shadow: 0 0 13px rgba(73,220,177,.9),0 0 3px rgba(220,255,245,.65);
 }
 .bk-notification-error .bk-notification-title {
   color: #ffb0bd; text-shadow: 0 0 12px rgba(255,139,158,.65);
 }
 .bk-notification-detail {
-  margin-top: 5px; color: rgba(231,255,249,.82);
-  font: 11px/1.3 var(--bk-font-mono, ui-monospace, monospace); letter-spacing: .07em;
+  margin-top: 7px; color: rgba(231,255,249,.86);
+  font: 11px/1.35 var(--bk-font-mono, ui-monospace, monospace); letter-spacing: .1em;
 }
 @media (prefers-reduced-motion: reduce) {
   .bk-notification { transition-duration: .001ms; }
+  .bk-notification::after { display: none; }
 }
 `;
 
