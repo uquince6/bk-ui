@@ -17,6 +17,18 @@ const CSS = `
   transition: opacity .22s ease,transform .22s ease;
 }
 .bk-notification.bk-notification-visible { opacity: 1; transform: translate(-50%,0) scale(1); }
+.bk-notification.bk-notification-attention {
+  top: 50%; bottom: auto; width: min(820px, calc(100% - 28px));
+  padding: 22px 38px 20px; border-color: var(--bk-feedback-accent);
+  background: radial-gradient(130% 180% at 50% 50%,rgba(63,199,180,.28),rgba(5,17,18,.92) 68%,rgba(3,10,14,.96));
+  box-shadow: inset 0 0 24px rgba(73,220,177,.22),0 0 38px rgba(73,220,177,.42),0 18px 60px rgba(0,0,0,.58);
+  transform: translate(-50%,calc(-50% + 18px)) scale(.97);
+  --bk-notification-scan-distance: 116px;
+}
+.bk-notification.bk-notification-attention.bk-notification-visible {
+  transform: translate(-50%,-50%) scale(1);
+  animation: bk-feedback-flicker 2s linear infinite;
+}
 .bk-notification::after {
   content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
   background: linear-gradient(90deg,transparent,rgba(73,220,177,.75) 25%,#d6fff4 50%,rgba(73,220,177,.75) 75%,transparent);
@@ -27,7 +39,7 @@ const CSS = `
 @keyframes bk-notification-scan {
   0% { transform: translateY(-2px); opacity: 0; }
   12% { opacity: .9; }
-  100% { transform: translateY(62px); opacity: 0; }
+  100% { transform: translateY(var(--bk-notification-scan-distance, 62px)); opacity: 0; }
 }
 .bk-notification.bk-notification-error {
   border-color: rgba(255,139,158,.48);
@@ -45,8 +57,18 @@ const CSS = `
   margin-top: 7px; color: rgba(231,255,249,.86);
   font: 11px/1.35 var(--bk-font-mono, ui-monospace, monospace); letter-spacing: .1em;
 }
+.bk-notification-attention .bk-notification-title {
+  margin-right: -.38em; color: #dcfff5;
+  font-size: clamp(19px,3.2vw,32px); letter-spacing: .38em;
+  text-shadow: 0 0 16px var(--bk-feedback-accent),0 0 4px rgba(220,255,245,.72);
+}
+.bk-notification-attention .bk-notification-detail {
+  margin-top: 11px; font-size: clamp(11px,1.5vw,14px);
+  letter-spacing: .14em; text-transform: uppercase;
+}
 @media (prefers-reduced-motion: reduce) {
   .bk-notification { transition-duration: .001ms; }
+  .bk-notification.bk-notification-attention.bk-notification-visible { animation: none; }
   .bk-notification::after { display: none; }
 }
 `;
@@ -98,12 +120,13 @@ export function createNotifier({
     element.classList.remove('bk-notification-visible');
   };
 
-  const show = ({ title = '', detail = '', variant = 'info', timeout = duration, announce } = {}) => {
+  const show = ({ title = '', detail = '', variant = 'info', presentation = 'compact', timeout = duration, announce } = {}) => {
     if (destroyed) return;
     clearTimeout(timer);
     titleElement.textContent = String(title);
     detailElement.textContent = String(detail);
     element.classList.toggle('bk-notification-error', variant === 'error');
+    element.classList.toggle('bk-notification-attention', presentation === 'attention');
     element.setAttribute('role', announce === 'assertive' ? 'alert' : 'status');
     element.setAttribute('aria-live', announce || ariaLive);
     element.classList.remove('bk-notification-visible');

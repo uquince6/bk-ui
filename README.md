@@ -32,6 +32,15 @@ notifications.show({
   detail: error.message,
   variant: 'error',
 });
+
+// Aviso excepcional, central y de alta visibilidad.
+notifications.show({
+  title: 'DESCANSO',
+  detail: '25 MINUTOS DE CONCENTRACIÓN · TE TOCA DESCANSAR',
+  presentation: 'attention',
+  announce: 'assertive',
+  timeout: 6500,
+});
 ```
 
 El módulo crea el marcado accesible y conserva una sola notificación visible. Las

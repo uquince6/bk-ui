@@ -63,8 +63,14 @@ test('crea, actualiza, oculta y destruye una notificación accesible', async () 
   assert.equal(notifier.element.classList.contains('bk-notification-visible'), true);
   assert.equal(notifier.element.classList.contains('bk-notification-error'), true);
 
+  notifier.show({ title: 'DESCANSO', presentation: 'attention', announce: 'assertive' });
+  assert.equal(notifier.element.classList.contains('bk-notification-attention'), true);
+  assert.equal(notifier.element.getAttribute('role'), 'alert');
+  assert.equal(notifier.element.getAttribute('aria-live'), 'assertive');
+
   notifier.show({ title: 'PROJECT SAVED' });
   assert.equal(notifier.element.classList.contains('bk-notification-error'), false);
+  assert.equal(notifier.element.classList.contains('bk-notification-attention'), false);
   await new Promise((resolve) => setTimeout(resolve, 25));
   assert.equal(notifier.element.classList.contains('bk-notification-visible'), false);
 
