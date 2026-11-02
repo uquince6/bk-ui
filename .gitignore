@@ -1,2 +1,22 @@
 node_modules/
 package-lock.json
+
+# Añadido por forja
+.venv/
+venv/
+__pycache__/
+*.pyc
+.wrangler/
+.cache/
+*.log
+*.pid
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.dev.vars
+*.local.json
+contexto/
+.DS_Store
+Thumbs.db
+desktop.ini

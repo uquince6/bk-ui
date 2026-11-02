@@ -1,0 +1,15 @@
+{
+  "$schema": "../forja/esquema/proyecto.schema.json",
+  "nombre": "bk-ui",
+  "descripcion": "Sistema visual compartido entre aplicaciones (Navigator, Vera)",
+  "tipo": "biblioteca",
+  "estado": "activo",
+  "plataformas": {
+    "windows": {},
+    "linux": {}
+  },
+  "comercial": {
+    "potencial": "personal",
+    "nota": ""
+  }
+}
